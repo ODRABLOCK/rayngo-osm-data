@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   export:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 10
     permissions:
       contents: read
