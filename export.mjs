@@ -11,10 +11,13 @@ async function bindings(query, fixture) {
     const url = new URL(endpoint);
     url.searchParams.set("query", prefixes + "\n" + query);
     const response = await fetch(url, {
-        headers: { Accept: "application/sparql-results+json" },
+        headers: {
+            Accept: "application/sparql-results+json",
+            "User-Agent": "RAYNGO-OSM-export/1.0 (https://github.com/ODRABLOCK/rayngo-osm-data)"
+        },
         signal: AbortSignal.timeout(120_000)
     });
-    if (!response.ok) throw new Error("QLever HTTP " + response.status);
+    if (!response.ok) throw new Error(`QLever HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
     return (await response.json()).results.bindings;
 }
 
