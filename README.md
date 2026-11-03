@@ -19,3 +19,6 @@ in the repository.
 Run locally with Node.js 24: `node export.mjs /tmp/rayngo-osm-output`.
 The feed manifest has schema 1, a monotonic UTC timestamp version, bytes and SHA-256.
 The payload is named `osm-enforcement-<version>.json` beside the manifest.
+
+See the [German operations guide](docs/OPERATIONS.md) for the weekly and manual
+workflows, recovery steps, screenshots, and the `node verify.mjs` feed check.
