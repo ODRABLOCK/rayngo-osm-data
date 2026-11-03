@@ -13,12 +13,20 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.make.outputs.version }}
+      bytes: ${{ steps.make.outputs.bytes }}
+      sha256: ${{ steps.make.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node export.mjs public
+      - name: Export and validate OSM snapshot
+        id: make
+        run: |
+          node export.mjs public
+          node -e 'const m=require("./public/manifest.json"); for (const key of ["version","bytes","sha256"]) console.log(key+"="+m[key])' >> "$GITHUB_OUTPUT"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
@@ -27,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: write
       pages: write
       id-token: write
     environment:
@@ -36,3 +45,18 @@ jobs:
       - name: Publish verified snapshot
         id: deploy
         uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Record successful publication
+        env:
+          DATA_VERSION: ${{ needs.export.outputs.version }}
+          DATA_BYTES: ${{ needs.export.outputs.bytes }}
+          DATA_SHA256: ${{ needs.export.outputs.sha256 }}
+        run: |
+          node -e 'const fs=require("node:fs"); fs.writeFileSync("last-success.json",JSON.stringify({version:Number(process.env.DATA_VERSION),bytes:Number(process.env.DATA_BYTES),sha256:process.env.DATA_SHA256,publishedAt:new Date().toISOString()},null,2)+"\n")'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add last-success.json
+          git commit -m "Record OSM feed version $DATA_VERSION"
+          git push origin HEAD:main
