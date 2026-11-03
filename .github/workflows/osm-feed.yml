@@ -1,0 +1,38 @@
+name: Export and publish OSM data
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1'
+permissions: {}
+concurrency:
+  group: rayngo-osm-pages
+  cancel-in-progress: false
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node export.mjs public
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+  publish:
+    needs: export
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Publish verified snapshot
+        id: deploy
+        uses: actions/deploy-pages@v4
